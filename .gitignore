@@ -1,0 +1,24 @@
+# Build
+.build
+.build-release
+dist
+
+# Swift Package Manager
+.swiftpm
+Package.resolved
+.swift-cache
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+*.playground
+
+# Cache
+.cache
+
+# macOS
+.DS_Store
+
+# Book
+book

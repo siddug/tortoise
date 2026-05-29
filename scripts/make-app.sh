@@ -1,0 +1,67 @@
+#!/bin/zsh
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+SCRATCH_DIR="${ROOT_DIR}/.build-release"
+DIST_DIR="${ROOT_DIR}/dist"
+APP_DIR="${DIST_DIR}/Tortoise.app"
+EXECUTABLE_PATH="${SCRATCH_DIR}/release/Tortoise"
+TMP_ROOT="${TMPDIR:-/tmp}"
+ICONSET_DIR="${TMP_ROOT}/tortoise.iconset"
+ICON_PATH="${APP_DIR}/Contents/Resources/AppIcon.icns"
+
+export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
+export CLANG_MODULE_CACHE_PATH="${CLANG_MODULE_CACHE_PATH:-${TMP_ROOT}/tortoise-clang-cache}"
+export SWIFTPM_CUSTOM_CACHE_DIR="${SWIFTPM_CUSTOM_CACHE_DIR:-${TMP_ROOT}/tortoise-swiftpm-cache}"
+
+swift build -c release --product Tortoise --scratch-path "${SCRATCH_DIR}"
+
+rm -rf "${APP_DIR}"
+mkdir -p "${APP_DIR}/Contents/MacOS" "${APP_DIR}/Contents/Resources"
+cp "${EXECUTABLE_PATH}" "${APP_DIR}/Contents/MacOS/Tortoise"
+
+rm -rf "${ICONSET_DIR}"
+swift "${ROOT_DIR}/scripts/generate-icon.swift" "${ICONSET_DIR}"
+iconutil -c icns "${ICONSET_DIR}" -o "${ICON_PATH}"
+rm -rf "${ICONSET_DIR}"
+
+cat > "${APP_DIR}/Contents/Info.plist" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>Tortoise</string>
+    <key>CFBundleIdentifier</key>
+    <string>io.opensource.tortoise</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleDisplayName</key>
+    <string>Tortoise</string>
+    <key>CFBundleName</key>
+    <string>Tortoise</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+</dict>
+</plist>
+EOF
+
+touch "${APP_DIR}"
+printf 'Created %s\n' "${APP_DIR}"
